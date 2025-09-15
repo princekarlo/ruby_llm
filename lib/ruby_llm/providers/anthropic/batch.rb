@@ -89,9 +89,8 @@ module RubyLLM
 
           validate_payload_size(payload)
 
-          response = @connection.post(batch_url) do |req|
+          response = @connection.post(batch_url, payload) do |req|
             req.headers.merge!(headers)
-            req.body = payload.to_json
           end
 
           unless response.success?
