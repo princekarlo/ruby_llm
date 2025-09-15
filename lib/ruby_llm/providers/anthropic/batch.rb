@@ -30,7 +30,9 @@ module RubyLLM
             raise RubyLLM::Error, "Batch status check failed: #{error_message}"
           end
 
-          JSON.parse(response.body)
+          body = response.body
+          body = JSON.parse(body) if body.is_a?(String)
+          body
         end
 
         def get_batch_results(batch_id)
@@ -45,7 +47,9 @@ module RubyLLM
             raise RubyLLM::Error, "Batch results retrieval failed: #{error_message}"
           end
 
-          JSON.parse(response.body)
+          body = response.body
+          body = JSON.parse(body) if body.is_a?(String)
+          body
         end
 
         private
@@ -98,15 +102,21 @@ module RubyLLM
             raise RubyLLM::Error, "Batch creation failed: #{error_message}"
           end
 
-          JSON.parse(response.body)
+          body = response.body
+          body = JSON.parse(body) if body.is_a?(String)
+          body
         end
 
         def build_request_params(request, **options)
           model = options[:model]
           temperature = options[:temperature]
-          params = options[:params]
+          params = options[:params] || {}
           tools = options[:tools]
           schema = options[:schema]
+
+          raise ArgumentError, 'Model is required for batch processing' unless model
+          raise ArgumentError, 'Model must have an id' unless model.respond_to?(:id) && model.id
+
           request_params = {
             model: model.id,
             max_tokens: params[:max_tokens] || 4096,
