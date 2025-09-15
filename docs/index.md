@@ -218,3 +218,13 @@ chat.ask "What's in this file?", with: "report.pdf"
 
 Visit `http://localhost:3000/chats` for a ready-to-use chat interface!
 
+## Core Features
+
+- [Chat](chat.md) - Conversational AI interactions
+- [Embeddings](embeddings.md) - Text vectorization
+- [Image Generation](image-generation.md) - AI-generated images
+- [Moderation](moderation.md) - Content safety
+- [Streaming](streaming.md) - Real-time responses
+- [Tools](tools.md) - Function calling
+- [Batch Processing](batch.md) - Efficient bulk processing
+

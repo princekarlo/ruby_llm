@@ -168,3 +168,44 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 Released under the MIT License.
+
+## Batch Processing
+
+Process multiple requests efficiently with asynchronous batch processing:
+
+```ruby
+chat = RubyLLM.batch(model: 'claude-3-5-sonnet-20241022')
+
+requests = [
+  { message: 'What is the weather?', custom_id: 'weather_1' },
+  { message: 'What is the time?', custom_id: 'time_1' }
+]
+
+# Create batch (returns batch info, not results)
+batch_info = chat.ask_batch(requests)
+batch_id = batch_info[:batch_id]
+
+# Check status until complete
+loop do
+  status = chat.get_batch_status(batch_id)
+  break if status['processing_status'] == 'completed'
+  sleep 30
+end
+
+# Retrieve results
+results = chat.get_batch_results(batch_id)
+```
+
+**ActiveRecord Integration**: When using `acts_as_chat`, batch processing saves user messages immediately and provides methods to process results:
+
+```ruby
+chat = Chat.create!(model: 'claude-3-5-sonnet-20241022')
+batch_info = chat.ask_batch(requests)
+
+# User messages saved immediately
+puts chat.messages.count # => 2
+
+# Process results when batch completes
+saved_messages = chat.process_batch_results(batch_id)
+puts chat.messages.count # => 4 (2 user + 2 assistant)
+```

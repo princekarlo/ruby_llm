@@ -4,6 +4,7 @@ module RubyLLM
   module Providers
     # Anthropic Claude API integration.
     class Anthropic < Provider
+      include Anthropic::Batch
       include Anthropic::Chat
       include Anthropic::Embeddings
       include Anthropic::Media

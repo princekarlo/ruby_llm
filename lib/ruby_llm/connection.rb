@@ -5,7 +5,7 @@ module RubyLLM
   class Connection
     attr_reader :provider, :connection, :config
 
-    def self.basic(&)
+    def self.basic
       Faraday.new do |f|
         f.response :logger,
                    RubyLLM.logger,
@@ -33,7 +33,7 @@ module RubyLLM
       end
     end
 
-    def post(url, payload, &)
+    def post(url, payload)
       body = payload.is_a?(Hash) ? JSON.generate(payload, ascii_only: false) : payload
       @connection.post url, body do |req|
         req.headers.merge! @provider.headers if @provider.respond_to?(:headers)
@@ -41,7 +41,7 @@ module RubyLLM
       end
     end
 
-    def get(url, &)
+    def get(url)
       @connection.get url do |req|
         req.headers.merge! @provider.headers if @provider.respond_to?(:headers)
         yield req if block_given?

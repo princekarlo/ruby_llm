@@ -179,9 +179,9 @@ module RubyLLM
         message_record
       end
 
-      def ask(message, with: nil, &)
+      def ask(message, with: nil, &block)
         create_user_message(message, with:)
-        complete(&)
+        complete(&block)
       end
 
       alias say ask
@@ -194,7 +194,87 @@ module RubyLLM
         raise e
       end
 
+      def ask_batch(requests, &)
+        # Validate requests
+        raise ArgumentError, 'Requests must be an array' unless requests.is_a?(Array)
+        raise ArgumentError, 'Requests array cannot be empty' if requests.empty?
+
+        requests.each_with_index do |request, index|
+          unless request.is_a?(Hash) && request[:message]
+            raise ArgumentError, "Request at index #{index} must be a hash with :message key"
+          end
+        end
+
+        # Create user messages for each request
+        requests.map do |request|
+          create_user_message(request[:message], with: request[:with])
+        end
+
+        # Create batch and return batch information
+        complete_batch(requests, &)
+      end
+
+      def complete_batch(requests, &)
+        to_llm
+
+        # Create batch and return batch information (asynchronous)
+        @chat.complete_batch(requests, &)
+      end
+
+      def get_batch_status(batch_id)
+        to_llm
+        @chat.get_batch_status(batch_id)
+      end
+
+      def get_batch_results(batch_id)
+        to_llm
+        @chat.get_batch_results(batch_id)
+      end
+
+      def process_batch_results(batch_id)
+        # Get batch results from provider
+        results = get_batch_results(batch_id)
+
+        # Save each successful result as a message
+        results.filter_map do |result|
+          next if result['error'] # Skip failed requests
+
+          # Extract content from response
+          response = result['response']
+          content = extract_content_from_response(response)
+          usage = response['usage'] || {}
+
+          # Create assistant message
+          message_record = messages_association.create!(
+            role: :assistant,
+            content: content,
+            input_tokens: usage['input_tokens'],
+            output_tokens: usage['output_tokens']
+          )
+
+          # Add model association
+          message_record.update!(self.class.model_association_name => model_association)
+
+          message_record
+        end
+      end
+
       private
+
+      def extract_content_from_response(response)
+        # Handle different content formats from Anthropic API
+        content = response['content']
+
+        case content
+        when Array
+          # Extract text from content array
+          content.map { |item| item['text'] }.join
+        when String
+          content
+        else
+          content.to_s
+        end
+      end
 
       def cleanup_failed_messages
         RubyLLM.logger.warn "RubyLLM: API call failed, destroying message: #{@message.id}"

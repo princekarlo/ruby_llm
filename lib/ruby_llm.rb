@@ -56,6 +56,10 @@ module RubyLLM
       Image.paint(...)
     end
 
+    def batch(...)
+      Chat.new(...)
+    end
+
     def models
       Models.instance
     end

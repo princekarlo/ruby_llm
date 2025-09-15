@@ -191,9 +191,9 @@ module RubyLLM
         message_record
       end
 
-      def ask(message, with: nil, &)
+      def ask(message, with: nil, &block)
         create_user_message(message, with:)
-        complete(&)
+        complete(&block)
       end
 
       alias say ask
@@ -204,6 +204,27 @@ module RubyLLM
         cleanup_failed_messages if @message&.persisted? && @message.content.blank?
         cleanup_orphaned_tool_results
         raise e
+      end
+
+      # Batch processing methods
+      def ask_batch(requests, &)
+        to_llm.ask_batch(requests, &)
+      end
+
+      def complete_batch(requests, &)
+        to_llm.complete_batch(requests, &)
+      end
+
+      def get_batch_status(batch_id)
+        to_llm.get_batch_status(batch_id)
+      end
+
+      def get_batch_results(batch_id)
+        to_llm.get_batch_results(batch_id)
+      end
+
+      def process_batch_results(batch_id)
+        to_llm.process_batch_results(batch_id)
       end
 
       private

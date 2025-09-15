@@ -37,7 +37,7 @@ module RubyLLM
       self.class.configuration_requirements
     end
 
-    def complete(messages, tools:, temperature:, model:, params: {}, headers: {}, schema: nil, &) # rubocop:disable Metrics/ParameterLists
+    def complete(messages, tools:, temperature:, model:, params: {}, headers: {}, schema: nil, &block) # rubocop:disable Metrics/ParameterLists
       normalized_temperature = maybe_normalize_temperature(temperature, model)
 
       payload = Utils.deep_merge(
@@ -53,7 +53,7 @@ module RubyLLM
       )
 
       if block_given?
-        stream_response @connection, payload, headers, &
+        stream_response @connection, payload, headers, &block
       else
         sync_response @connection, payload, headers
       end
@@ -125,6 +125,10 @@ module RubyLLM
 
     def parse_tool_calls(_tool_calls)
       nil
+    end
+
+    def complete_batch(requests, **options, &)
+      raise NotImplementedError, "Batch processing not implemented for #{self.class.name}"
     end
 
     class << self

@@ -30,9 +30,9 @@ module RubyLLM
       }
     end
 
-    def ask(message = nil, with: nil, &)
+    def ask(message = nil, with: nil, &block)
       add_message role: :user, content: Content.new(message, with)
-      complete(&)
+      complete(&block)
     end
 
     alias say ask
@@ -115,6 +115,57 @@ module RubyLLM
     def on_tool_result(&block)
       @on[:tool_result] = block
       self
+    end
+
+    def ask_batch(requests, &)
+      raise ArgumentError, 'Requests must be an array' unless requests.is_a?(Array)
+      raise ArgumentError, 'Requests array cannot be empty' if requests.empty?
+
+      # Validate each request
+      requests.each_with_index do |request, index|
+        unless request.is_a?(Hash) && request[:message]
+          raise ArgumentError, "Request at index #{index} must be a hash with :message key"
+        end
+      end
+
+      complete_batch(requests, &)
+    end
+
+    def complete_batch(requests, &)
+      unless @provider.respond_to?(:complete_batch)
+        raise NotImplementedError,
+              "Batch processing not supported by #{@provider.class.name}"
+      end
+
+      # Create batch and return batch information
+      @provider.complete_batch(
+        requests,
+        tools: @tools,
+        temperature: @temperature,
+        model: @model,
+        params: @params,
+        headers: @headers,
+        schema: @schema,
+        &
+      )
+    end
+
+    def get_batch_status(batch_id)
+      unless @provider.respond_to?(:get_batch_status)
+        raise NotImplementedError,
+              "Batch status checking not supported by #{@provider.class.name}"
+      end
+
+      @provider.get_batch_status(batch_id)
+    end
+
+    def get_batch_results(batch_id)
+      unless @provider.respond_to?(:get_batch_results)
+        raise NotImplementedError,
+              "Batch results retrieval not supported by #{@provider.class.name}"
+      end
+
+      @provider.get_batch_results(batch_id)
     end
 
     def each(&)
