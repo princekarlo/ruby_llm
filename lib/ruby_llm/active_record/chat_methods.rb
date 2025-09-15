@@ -240,10 +240,10 @@ module RubyLLM
           # Skip failed requests - check for error in result structure
           next if result['result']['type'] == 'errored'
 
-          # Extract content from response
-          response = result['result']['response']
-          content = extract_content_from_response(response)
-          usage = response['usage'] || {}
+          # Extract content from message (not response)
+          message = result['result']['message']
+          content = extract_content_from_response(message)
+          usage = message['usage'] || {}
 
           # Create assistant message
           message_record = messages_association.create!(

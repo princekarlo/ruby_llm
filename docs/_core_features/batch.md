@@ -143,8 +143,8 @@ end
 # Get results
 results = chat.get_batch_results(batch_id)
 results.each do |result|
-  if result['result']['type'] == 'completed'
-    puts "#{result['custom_id']}: #{result['result']['response']['content'][0]['text']}"
+  if result['result']['type'] == 'succeeded'
+    puts "#{result['custom_id']}: #{result['result']['message']['content'][0]['text']}"
   else
     puts "#{result['custom_id']}: Error - #{result['result']['error']['error']['message']}"
   end
