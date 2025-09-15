@@ -47,9 +47,14 @@ module RubyLLM
             raise RubyLLM::Error, "Batch results retrieval failed: #{error_message}"
           end
 
+          # Batch results are returned as JSONL (JSON Lines) format
           body = response.body
-          body = JSON.parse(body) if body.is_a?(String)
-          body
+          if body.is_a?(String)
+            # Parse each line as a separate JSON object
+            body.lines.map { |line| JSON.parse(line.strip) }
+          else
+            body
+          end
         end
 
         private
