@@ -122,23 +122,26 @@ module RubyLLM
           raise ArgumentError, 'Model is required for batch processing' unless model
           raise ArgumentError, 'Model must have an id' unless model.respond_to?(:id) && model.id
 
-          request_params = {
-            model: model.id,
-            max_tokens: params[:max_tokens] || 4096,
-            temperature: temperature,
-            messages: [
-              {
-                role: 'user',
-                content: request[:message]
-              }
-            ]
-          }
+          messages = [
+            RubyLLM::Message.new(
+              role: :user,
+              content: request[:message]
+            )
+          ]
 
-          request_params[:tools] = format_tools_for_batch(tools) if tools.any?
+          normalized_temperature = maybe_normalize_temperature(temperature, model)
 
-          request_params[:response_format] = { type: 'json_schema', json_schema: schema } if schema
-
-          request_params
+          Utils.deep_merge(
+            render_payload(
+              messages,
+              tools: tools,
+              temperature: normalized_temperature,
+              model: model,
+              stream: false,
+              schema: schema
+            ),
+            params
+          )
         end
 
         def validate_batch_size(requests)
@@ -156,6 +159,10 @@ module RubyLLM
 
         def format_tools_for_batch(tools)
           tools.values.map { |t| Tools.function_for(t) }
+        end
+
+        def maybe_normalize_temperature(temperature, _model)
+          temperature
         end
       end
     end

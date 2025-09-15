@@ -237,10 +237,11 @@ module RubyLLM
 
         # Save each successful result as a message
         results.filter_map do |result|
-          next if result['error'] # Skip failed requests
+          # Skip failed requests - check for error in result structure
+          next if result['result']['type'] == 'errored'
 
           # Extract content from response
-          response = result['response']
+          response = result['result']['response']
           content = extract_content_from_response(response)
           usage = response['usage'] || {}
 
